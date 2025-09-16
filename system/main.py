@@ -498,6 +498,10 @@ if __name__ == "__main__":
     parser.add_argument('-ca', "--fedcross_alpha", type=float, default=0.99)
     parser.add_argument('-cmss', "--collaberative_model_select_strategy", type=int, default=1)
 
+    #Mine args
+    parser.add_argument('-nmc', "--n_client_malicious", type=int, default=0)
+    parser.add_argument('-atk', '--atack', type = str, default='random')
+    parser.add_argument('-ria', '--round_init_atk', type = int, default=0)
 
     args = parser.parse_args()
 

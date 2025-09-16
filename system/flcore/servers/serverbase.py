@@ -7,7 +7,7 @@ import time
 import random
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
-
+from flcore.clients.clientmaliciousavg import ClientMaliciousAVG
 
 class Server(object):
     def __init__(self, args, times):
@@ -63,16 +63,27 @@ class Server(object):
         self.eval_new_clients = False
         self.fine_tuning_epoch_new = args.fine_tuning_epoch_new
 
+        self.n_client_malicious = args.n_client_malicious
+        self.current_round = -1
+
     def set_clients(self, clientObj):
+        indexes = list(range(self.num_clients))
+        n_malicious = self.n_client_malicious
+        index_malicious = np.random.choice(indexes, n_malicious, replace=False)
+        print(index_malicious)
         for i, train_slow, send_slow in zip(range(self.num_clients), self.train_slow_clients, self.send_slow_clients):
             train_data = read_client_data(self.dataset, i, is_train=True, few_shot=self.few_shot)
             test_data = read_client_data(self.dataset, i, is_train=False, few_shot=self.few_shot)
-            client = clientObj(self.args, 
-                            id=i, 
-                            train_samples=len(train_data), 
-                            test_samples=len(test_data), 
-                            train_slow=train_slow, 
-                            send_slow=send_slow)
+            
+            if i not in index_malicious:
+                client = clientObj(self.args, id=i, train_samples=len(train_data), 
+                                test_samples=len(test_data), train_slow=train_slow, 
+                                send_slow=send_slow)
+            elif i in index_malicious:
+                print("oi")
+                client = ClientMaliciousAVG(self.args, id=i, train_samples=len(train_data), 
+                                test_samples=len(test_data), train_slow=train_slow, 
+                                send_slow=send_slow)
             self.clients.append(client)
 
     # random select slow clients
@@ -92,6 +103,7 @@ class Server(object):
             self.send_slow_rate)
 
     def select_clients(self):
+        self.current_round += 1
         if self.random_join_ratio:
             self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0]
         else:
@@ -131,7 +143,8 @@ class Server(object):
                 tot_samples += client.train_samples
                 self.uploaded_ids.append(client.id)
                 self.uploaded_weights.append(client.train_samples)
-                self.uploaded_models.append(client.model)
+                self.uploaded_models.append(client.send_local_model(self.current_round))
+                
         for i, w in enumerate(self.uploaded_weights):
             self.uploaded_weights[i] = w / tot_samples
 

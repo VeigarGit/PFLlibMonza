@@ -118,7 +118,11 @@ class Client(object):
         auc = metrics.roc_auc_score(y_true, y_prob, average='micro')
         
         return test_acc, test_num, auc
-
+    
+    def send_local_model(self, round):
+        self.is_malicious = False
+        return self.model
+    
     def train_metrics(self):
         trainloader = self.load_train_data()
         # self.model = self.load_model('model')
