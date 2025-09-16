@@ -172,7 +172,8 @@ class Server(object):
             similarity = self.cosine_similarity(client_model_params, global_model_params)
             similarities.append((self.ids[idx], similarity)) # Armazenando o ID do cliente e a similaridade com o modelo global
         return similarities
-
+    
+    
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
 

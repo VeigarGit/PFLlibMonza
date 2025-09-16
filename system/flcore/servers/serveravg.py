@@ -40,12 +40,11 @@ class FedAvg(Server):
 
             self.receive_models()
             if i>0:
-                global_model_params = list(self.global_model.parameters())  # Ajuste conforme necessário para obter o modelo global
+                global_model_params = list(self.global_model.parameters()) 
             # Calcular a similaridade de cosseno entre os modelos dos clientes e o modelo global
                 similarities = self.calculate_similarity_with_global_model(global_model_params)
                 for sim in similarities:
                     print(f"Cosine similarity between client {sim[0]} and the global model: {sim[1]:.4f}")
-
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()
