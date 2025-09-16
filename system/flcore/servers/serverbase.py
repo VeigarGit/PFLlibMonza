@@ -66,6 +66,8 @@ class Server(object):
         self.n_client_malicious = args.n_client_malicious
         self.current_round = -1
 
+        self.ids =[]
+
     def set_clients(self, clientObj):
         indexes = list(range(self.num_clients))
         n_malicious = self.n_client_malicious
@@ -80,7 +82,6 @@ class Server(object):
                                 test_samples=len(test_data), train_slow=train_slow, 
                                 send_slow=send_slow)
             elif i in index_malicious:
-                print("oi")
                 client = ClientMaliciousAVG(self.args, id=i, train_samples=len(train_data), 
                                 test_samples=len(test_data), train_slow=train_slow, 
                                 send_slow=send_slow)
@@ -132,6 +133,7 @@ class Server(object):
         self.uploaded_ids = []
         self.uploaded_weights = []
         self.uploaded_models = []
+        self.ids =[]
         tot_samples = 0
         for client in active_clients:
             try:
@@ -144,9 +146,32 @@ class Server(object):
                 self.uploaded_ids.append(client.id)
                 self.uploaded_weights.append(client.train_samples)
                 self.uploaded_models.append(client.send_local_model(self.current_round))
+                self.ids.append(client.id)
                 
         for i, w in enumerate(self.uploaded_weights):
             self.uploaded_weights[i] = w / tot_samples
+
+    def cosine_similarity(self, model1_params, model2_params):
+        """Calcula a similaridade de cosseno entre dois conjuntos de parâmetros de modelos"""
+        model1_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model1_params])
+        model2_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model2_params])
+
+        
+        dot_product = np.dot(model1_params_flat, model2_params_flat)
+        norm_model1 = np.linalg.norm(model1_params_flat)
+        norm_model2 = np.linalg.norm(model2_params_flat)
+        
+        similarity = dot_product / (norm_model1 * norm_model2)
+        return similarity
+
+    def calculate_similarity_with_global_model(self, global_model_params):
+        """Calcula a similaridade de cosseno entre todos os modelos dos clientes e o modelo global"""
+        similarities = []
+        for idx, client_model in enumerate(self.uploaded_models):
+            client_model_params = list(client_model.parameters())  # Parâmetros do modelo do cliente
+            similarity = self.cosine_similarity(client_model_params, global_model_params)
+            similarities.append((self.ids[idx], similarity)) # Armazenando o ID do cliente e a similaridade com o modelo global
+        return similarities
 
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)

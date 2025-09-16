@@ -2,7 +2,7 @@ import time
 from flcore.clients.clientavg import clientAVG
 from flcore.servers.serverbase import Server
 from threading import Thread
-
+import numpy as np
 
 class FedAvg(Server):
     def __init__(self, args, times):
@@ -39,6 +39,13 @@ class FedAvg(Server):
             # [t.join() for t in threads]
 
             self.receive_models()
+            if i>0:
+                global_model_params = list(self.global_model.parameters())  # Ajuste conforme necessário para obter o modelo global
+            # Calcular a similaridade de cosseno entre os modelos dos clientes e o modelo global
+                similarities = self.calculate_similarity_with_global_model(global_model_params)
+                for sim in similarities:
+                    print(f"Cosine similarity between client {sim[0]} and the global model: {sim[1]:.4f}")
+
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()
