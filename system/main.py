@@ -502,7 +502,7 @@ if __name__ == "__main__":
     parser.add_argument('-nmc', "--n_client_malicious", type=int, default=0)
     parser.add_argument('-atk', '--atack', type = str, default='random')
     parser.add_argument('-ria', '--round_init_atk', type = int, default=0)
-
+    parser.add_argument('-cc', '--cluster_comparation', type = int, default=0) 
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id

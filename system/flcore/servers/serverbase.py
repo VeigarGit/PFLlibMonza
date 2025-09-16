@@ -65,7 +65,7 @@ class Server(object):
 
         self.n_client_malicious = args.n_client_malicious
         self.current_round = -1
-
+        self.cc = args.cluster_comparation
         self.ids =[]
 
     def set_clients(self, clientObj):
@@ -173,7 +173,30 @@ class Server(object):
             similarities.append((self.ids[idx], similarity)) # Armazenando o ID do cliente e a similaridade com o modelo global
         return similarities
     
-    
+    def calculate_similarity_scores(self):
+        """Calcula a pontuação de similaridade para cada cliente, considerando todos os outros clientes"""
+        similarity_scores = {client_id: 0 for client_id in self.ids}  # Inicializando as pontuações com 0
+        
+        for i in range(len(self.uploaded_models)):
+            for j in range(len(self.uploaded_models)):
+                if i != j:  # Evitar comparar o cliente com ele mesmo
+                    client_model_i_params = list(self.uploaded_models[i].parameters())
+                    client_model_j_params = list(self.uploaded_models[j].parameters())
+                    
+                    # Calculando a similaridade de cosseno entre os modelos dos clientes
+                    similarity = self.cosine_similarity(client_model_i_params, client_model_j_params)
+                    
+                    # Somando a similaridade na pontuação de cada cliente
+                    similarity_scores[self.ids[i]] += similarity
+                    similarity_scores[self.ids[j]] += similarity
+        
+        # Normalizar as pontuações dividindo pela quantidade de comparações
+        num_comparisons = len(self.uploaded_models) - 1  # Cada cliente é comparado com os outros, exceto ele mesmo
+        for client_id in similarity_scores:
+            similarity_scores[client_id] /= num_comparisons
+        
+        return similarity_scores
+
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
 
