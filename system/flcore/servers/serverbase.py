@@ -152,7 +152,7 @@ class Server(object):
             self.uploaded_weights[i] = w / tot_samples
 
     def cosine_similarity(self, model1_params, model2_params):
-        """Calcula a similaridade de cosseno entre dois conjuntos de parâmetros de modelos"""
+        #Calculo do cosseno
         model1_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model1_params])
         model2_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model2_params])
 
@@ -165,16 +165,16 @@ class Server(object):
         return similarity
 
     def calculate_similarity_with_global_model(self, global_model_params):
-        """Calcula a similaridade de cosseno entre todos os modelos dos clientes e o modelo global"""
+        #Similaridade cosseno com o modelo global 
         similarities = []
         for idx, client_model in enumerate(self.uploaded_models):
-            client_model_params = list(client_model.parameters())  # Parâmetros do modelo do cliente
+            client_model_params = list(client_model.parameters())  # Parâmetros cliente
             similarity = self.cosine_similarity(client_model_params, global_model_params)
-            similarities.append((self.ids[idx], similarity)) # Armazenando o ID do cliente e a similaridade com o modelo global
+            similarities.append((self.ids[idx], similarity)) # Armazenando o ID do e a similaridade
         return similarities
     
     def calculate_similarity_scores(self):
-        """Calcula a pontuação de similaridade para cada cliente, considerando todos os outros clientes"""
+        #Similaridade entre todos os clientes
         similarity_scores = {client_id: 0 for client_id in self.ids}  # Inicializando as pontuações com 0
         
         for i in range(len(self.uploaded_models)):
@@ -183,37 +183,35 @@ class Server(object):
                     client_model_i_params = list(self.uploaded_models[i].parameters())
                     client_model_j_params = list(self.uploaded_models[j].parameters())
                     
-                    # Calculando a similaridade de cosseno entre os modelos dos clientes
+                    # Calculando a similaridade de cosseno entre os clientes
                     similarity = self.cosine_similarity(client_model_i_params, client_model_j_params)
                     
-                    # Somando a similaridade na pontuação de cada cliente
+                    # Somando a similaridade na pontuação
                     similarity_scores[self.ids[i]] += similarity
                     similarity_scores[self.ids[j]] += similarity
         
-        # Normalizar as pontuações dividindo pela quantidade de comparações
-        num_comparisons = len(self.uploaded_models) - 1  # Cada cliente é comparado com os outros, exceto ele mesmo
+        # Normalizar as pontuações  
+        num_comparisons = len(self.uploaded_models) - 1  #Ta certo isso?
         for client_id in similarity_scores:
             similarity_scores[client_id] /= num_comparisons
         
         return similarity_scores
 
     def calculate_shannon_entropy(self, model_params):
-        """Calcula a entropia de Shannon para os parâmetros de um modelo"""
-        # Flatten the model parameters into a 1D array
+        # Modelo em lista de array 1D 
         model_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model_params])
 
-        # Normalize the parameters to create a probability distribution
+        # probabilidade de distribuiçao 
         hist, bin_edges = np.histogram(model_params_flat, bins=50, density=True)
 
-        # Normalize to ensure the sum of probabilities is 1
+        # Normalização suspeita 
         hist = hist / np.sum(hist)
 
-        # Calculating the Shannon entropy
-        entropy = -np.sum(hist * np.log2(hist + 1e-10))  # Adding small value to avoid log(0)
+        entropy = -np.sum(hist * np.log2(hist + 1e-10))  #log(0)
         return entropy
 
     def calculate_client_entropies(self):
-        """Calcula a entropia de Shannon para cada cliente com base nos parâmetros do modelo"""
+
         client_entropies = {}
 
         for idx, client_model in enumerate(self.uploaded_models):
