@@ -91,6 +91,7 @@ class FedAvg(Server):
 
                     for idx in range(len(cluster_tuples) - 1, -1, -1):
                         client_id, cluster = cluster_tuples[idx]
+                        #print(self.ids)
                         if cluster == min_cluster:
                             print(f"Removing client {client_id} from cluster {cluster}")
                             
@@ -99,6 +100,7 @@ class FedAvg(Server):
                             del self.ids[idx]
                             del self.uploaded_ids[idx]
                             del self.uploaded_weights[idx]
+                            #print(self.ids)
                     self.uploaded_weights = [weight / sum(self.uploaded_weights) for weight in self.uploaded_weights]
 
 
