@@ -197,6 +197,33 @@ class Server(object):
         
         return similarity_scores
 
+    def calculate_shannon_entropy(self, model_params):
+        """Calcula a entropia de Shannon para os parâmetros de um modelo"""
+        # Flatten the model parameters into a 1D array
+        model_params_flat = np.concatenate([p.detach().cpu().numpy().flatten() for p in model_params])
+
+        # Normalize the parameters to create a probability distribution
+        hist, bin_edges = np.histogram(model_params_flat, bins=50, density=True)
+
+        # Normalize to ensure the sum of probabilities is 1
+        hist = hist / np.sum(hist)
+
+        # Calculating the Shannon entropy
+        entropy = -np.sum(hist * np.log2(hist + 1e-10))  # Adding small value to avoid log(0)
+        return entropy
+
+    def calculate_client_entropies(self):
+        """Calcula a entropia de Shannon para cada cliente com base nos parâmetros do modelo"""
+        client_entropies = {}
+
+        for idx, client_model in enumerate(self.uploaded_models):
+            client_model_params = list(client_model.parameters())
+            entropy = self.calculate_shannon_entropy(client_model_params)
+            client_entropies[self.ids[idx]] = entropy
+            print(f"Shannon entropy for client {self.ids[idx]}: {entropy:.4f}")
+
+        return client_entropies
+
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
 

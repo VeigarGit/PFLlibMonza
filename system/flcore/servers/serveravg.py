@@ -17,7 +17,26 @@ class FedAvg(Server):
 
         # self.load_model()
         self.Budget = []
+    def normalize_entropies(self, client_entropies):
+        """Normaliza as entropias para que fiquem no intervalo [0, 1]"""
+        # Obter as entropias
+        entropies = np.array(list(client_entropies.values()))
 
+        # Calcular o valor mínimo e máximo
+        min_entropy = np.min(entropies)
+        max_entropy = np.max(entropies)
+
+        # Normalizar as entropias
+        normalized_entropies = (entropies - min_entropy) / (max_entropy - min_entropy)
+
+        # Atualizar o dicionário com as entropias normalizadas
+        normalized_client_entropies = {client_id: normalized_entropy for client_id, normalized_entropy in zip(client_entropies.keys(), normalized_entropies)}
+
+        # Exibir as entropias normalizadas
+        for client_id, normalized_entropy in normalized_client_entropies.items():
+            print(f"Normalized Shannon entropy for client {client_id}: {normalized_entropy:.4f}")
+
+        return normalized_client_entropies
 
     def train(self):
         for i in range(self.global_rounds+1):
@@ -39,17 +58,21 @@ class FedAvg(Server):
             # [t.join() for t in threads]
 
             self.receive_models()
-            if self.cc==0:
-                if i>0:
+            if i>0:
+                if self.cc==0:
                     global_model_params = list(self.global_model.parameters()) 
                 # Calcular a similaridade de cosseno entre os modelos dos clientes e o modelo global
                     similarities = self.calculate_similarity_with_global_model(global_model_params)
                     for sim in similarities:
                         print(f"Cosine similarity between client {sim[0]} and the global model: {sim[1]:.4f}")
-            if self.cc==1:
-                similarity_scores = self.calculate_similarity_scores()
-                for client_id, score in similarity_scores.items():
-                    print(f"Cosine similarity for client {client_id}: {score:.4f}")
+                if self.cc==1:
+                    similarity_scores = self.calculate_similarity_scores()
+                    for client_id, score in similarity_scores.items():
+                        print(f"Cosine similarity for client {client_id}: {score:.4f}")
+                    normalized_client_entropies = self.normalize_entropies(similarity_scores)
+                if self.cc ==2:
+                    client_entropies = self.calculate_client_entropies()
+                    normalized_client_entropies = self.normalize_entropies(client_entropies)
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()
