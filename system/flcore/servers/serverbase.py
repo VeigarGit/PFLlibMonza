@@ -8,7 +8,8 @@ import random
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
 from flcore.clients.clientmaliciousavg import ClientMaliciousAVG
-
+from sklearn.cluster import KMeans
+#from scipy.cluster.hierarchy import dendrogram, linkage
 class Server(object):
     def __init__(self, args, times):
         # Set up the main attributes
@@ -175,7 +176,8 @@ class Server(object):
     
     def calculate_similarity_scores(self):
         #Similaridade entre todos os clientes
-        similarity_scores = {client_id: 0 for client_id in self.ids}  # Inicializando as pontuações com 0
+        num_clients = len(self.uploaded_models)
+        similarity_matrix = np.zeros((num_clients, num_clients))  # Matriz de similaridade
         
         for i in range(len(self.uploaded_models)):
             for j in range(len(self.uploaded_models)):
@@ -187,15 +189,28 @@ class Server(object):
                     similarity = self.cosine_similarity(client_model_i_params, client_model_j_params)
                     
                     # Somando a similaridade na pontuação
-                    similarity_scores[self.ids[i]] += similarity
-                    similarity_scores[self.ids[j]] += similarity
+                    similarity_matrix[i, j] = similarity
+                    similarity_matrix[j, i] = similarity  # A similaridade é simétrica
         
         # Normalizar as pontuações  
-        num_comparisons = len(self.uploaded_models) - 1  #Ta certo isso?
-        for client_id in similarity_scores:
-            similarity_scores[client_id] /= num_comparisons
+        #num_comparisons = len(self.uploaded_models) - 1  #Ta certo isso?
+        #for client_id in similarity_scores:
+        #   similarity_scores[client_id] /= num_comparisons
         
-        return similarity_scores
+        return similarity_matrix
+
+    def perform_clustering(self, similarity_matrix, num_clusters=2):
+        """Realiza a clusterização com base na matriz de similaridade usando KMeans"""
+        # Convertendo a matriz de similaridade em uma matriz de distâncias
+        distance_matrix = 1 - similarity_matrix  # Distância = 1 - Similaridade de Cosseno
+
+        # Aplicando o KMeans
+        kmeans = KMeans(n_clusters=num_clusters, random_state=0)
+        kmeans.fit(distance_matrix)
+        
+        # Atribuindo os clusters aos clientes
+        clusters = kmeans.labels_
+        return clusters
 
     def calculate_shannon_entropy(self, model_params):
         # Modelo em lista de array 1D 

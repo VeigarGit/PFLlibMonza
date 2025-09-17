@@ -59,18 +59,29 @@ class FedAvg(Server):
 
             self.receive_models()
             if i>0:
+                #comparar com o modelo
                 if self.cc==0:
                     global_model_params = list(self.global_model.parameters()) 
                 # Calcular a similaridade de cosseno entre os modelos dos clientes e o modelo global
                     similarities = self.calculate_similarity_with_global_model(global_model_params)
                     for sim in similarities:
                         print(f"Cosine similarity between client {sim[0]} and the global model: {sim[1]:.4f}")
+                #comparar com todos os modelos
                 if self.cc==1:
                     similarity_scores = self.calculate_similarity_scores()
                     for client_id, score in similarity_scores.items():
                         print(f"Cosine similarity for client {client_id}: {score:.4f}")
                     normalized_client_entropies = self.normalize_entropies(similarity_scores)
-                if self.cc ==2:
+                #comparar com todos os modelos e fazer cluster
+                if self.cc==2:
+                    similarity_matrix = self.calculate_similarity_scores()
+
+                    # Realizar a clusterização
+                    num_clusters = 2  # Defina o número de clusters conforme necessário
+                    clusters = self.perform_clustering(similarity_matrix, num_clusters)
+                    for idx, cluster in enumerate(clusters):
+                        print(f"Client {self.ids[idx]} is in cluster {cluster}")
+                if self.cc ==3:
                     client_entropies = self.calculate_client_entropies()
                     normalized_client_entropies = self.normalize_entropies(client_entropies)
             if self.dlg_eval and i%self.dlg_gap == 0:
