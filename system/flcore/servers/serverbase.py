@@ -10,6 +10,8 @@ from utils.dlg import DLG
 from flcore.clients.clientmaliciousavg import ClientMaliciousAVG
 from sklearn.cluster import KMeans
 from collections import Counter
+from sklearn.cluster import AgglomerativeClustering
+import numpy as np
 #from scipy.cluster.hierarchy import dendrogram, linkage
 class Server(object):
     def __init__(self, args, times):
@@ -206,11 +208,15 @@ class Server(object):
         distance_matrix = 1 - similarity_matrix  # Distância = 1 - Similaridade de Cosseno
 
         # Aplicando o KMeans
-        kmeans = KMeans(n_clusters=num_clusters, random_state=0)
-        kmeans.fit(distance_matrix)
+        #kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+        #kmeans.fit(distance_matrix)
         
         # Atribuindo os clusters aos clientes
-        clusters = kmeans.labels_
+        #clusters = kmeans.labels_
+        agglomerative = AgglomerativeClustering(n_clusters=num_clusters)
+    
+    # Ajustando e atribuindo os clusters
+        clusters = agglomerative.fit_predict(distance_matrix)
         return clusters
 
     def calculate_shannon_entropy(self, model_params):
