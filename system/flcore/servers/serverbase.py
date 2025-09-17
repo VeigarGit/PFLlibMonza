@@ -9,6 +9,7 @@ from utils.data_utils import read_client_data
 from utils.dlg import DLG
 from flcore.clients.clientmaliciousavg import ClientMaliciousAVG
 from sklearn.cluster import KMeans
+from collections import Counter
 #from scipy.cluster.hierarchy import dendrogram, linkage
 class Server(object):
     def __init__(self, args, times):
