@@ -199,11 +199,38 @@ class Server(object):
         #num_comparisons = len(self.uploaded_models) - 1  #Ta certo isso?
         #for client_id in similarity_scores:
         #   similarity_scores[client_id] /= num_comparisons
+        #print(similarity_matrix)
+        a= self.calculate_client_scores(similarity_matrix)
         
-        return similarity_matrix
+        return similarity_matrix, a
+        
+    def calculate_client_scores(self, similarity_matrix):
+        """
+        Calcula um score para cada cliente baseado na matriz de similaridade.
+        Score = média da similaridade do cliente com todos os outros clientes.
+        """
+          # Matriz de similaridade (NxN)
+        num_clients = len(self.uploaded_models)
+        
+        # Inicializa um dicionário para armazenar os scores
+        client_scores = {}
+        
+        for i in range(num_clients):
+            # Exclui a diagonal (similaridade consigo mesmo)
+            sum_similarity = np.sum(similarity_matrix[i]) - similarity_matrix[i, i]
+            score = sum_similarity / (num_clients - 1)  # Média das similaridades com os outros clientes
+            client_scores[self.ids[i]] = score
+        
+        # Opcional: normalizar scores entre 0 e 1
+        scores_array = np.array(list(client_scores.values()))
+        min_score = np.min(scores_array)
+        max_score = np.max(scores_array)
+        
+        for client_id in client_scores:
+            client_scores[client_id] = (client_scores[client_id] - min_score) / (max_score - min_score + 1e-10)
+        return client_scores
 
     def perform_clustering(self, similarity_matrix, num_clusters=2):
-        """Realiza a clusterização com base na matriz de similaridade usando KMeans"""
         # Convertendo a matriz de similaridade em uma matriz de distâncias
         distance_matrix = 1 - similarity_matrix  # Distância = 1 - Similaridade de Cosseno
 

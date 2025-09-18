@@ -17,6 +17,7 @@ class FedAvg(Server):
 
         # self.load_model()
         self.Budget = []
+
     def normalize_entropies(self, client_entropies):
         """Normaliza as entropias para que fiquem no intervalo [0, 1]"""
         # Obter as entropias
@@ -74,7 +75,8 @@ class FedAvg(Server):
                     normalized_client_entropies = self.normalize_entropies(similarity_scores)
                 #comparar com todos os modelos e fazer cluster
                 if self.cc==2:
-                    similarity_matrix = self.calculate_similarity_scores()
+                    oi = time.time()
+                    similarity_matrix, a = self.calculate_similarity_scores()
 
                     # Realizar a clusterização
                     num_clusters = 2  # Defina o número de clusters conforme necessário
@@ -102,9 +104,38 @@ class FedAvg(Server):
                             del self.uploaded_weights[idx]
                             #print(self.ids)
                     self.uploaded_weights = [weight / sum(self.uploaded_weights) for weight in self.uploaded_weights]
+                    bye = time.time()
+                    vish = bye- oi  # Calcula o tempo decorrido
+                    print(f"Tempo de execução: {vish:.4f} segundos")
+                #metodo do cosseno mas com score
+                if self.cc==3:
+                    oi = time.time()
+                    similarity_matrix, client_scores  = self.calculate_similarity_scores()
+                    # Converte os scores para array e calcula a média
+                    scores_array = np.array(list(client_scores.values()))
+                    mean_score = np.mean(scores_array)
+                    
+                    print(f"Average score: {mean_score:.4f}")
 
+                    # Cria uma lista de tuplas para manter a posição dos clientes
+                    client_tuples = [(self.ids[idx], client_scores[self.ids[idx]]) for idx in range(len(self.ids))]
 
-                if self.cc ==3:
+                    # Itera de trás para frente para remover clientes abaixo da média
+                    for idx in range(len(client_tuples) - 1, -1, -1):
+                        client_id, score = client_tuples[idx]
+                        if score < mean_score:
+                            print(f"Removing client {client_id} with score {score:.4f} (below average)")
+
+                            # Remover o cliente das listas associadas
+                            del self.uploaded_models[idx]
+                            del self.ids[idx]
+                            del self.uploaded_ids[idx]
+                            del self.uploaded_weights[idx]
+                    self.uploaded_weights = [weight / sum(self.uploaded_weights) for weight in self.uploaded_weights]
+                    bye = time.time()
+                    vish = bye - oi  # Calcula o tempo decorrido
+                    print(f"Tempo de execução: {vish:.4f} segundos")
+                if self.cc ==4:
                     client_entropies = self.calculate_client_entropies()
                     normalized_client_entropies = self.normalize_entropies(client_entropies)
 
