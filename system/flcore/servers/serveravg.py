@@ -137,21 +137,27 @@ class FedAvg(Server):
                     print(f"Tempo de execução: {vish:.4f} segundos")
                 if self.cc ==4:
                     oi = time.time()
+                    k = 3
                     client_entropies = self.calculate_client_entropies()
-                    entropies_array = np.array(list(client_entropies.values()))
-                    mean_entropy = np.mean(entropies_array)
-                    print(f"Mean Shannon entropy: {mean_entropy:.4f}")
-
-                    # 3. Criar lista de tuplas (id, entropy) para percorrer
+                    entropies = np.array(list(client_entropies.values()))
+                    mean_entropy = np.mean(entropies)
+                    std_entropy = np.std(entropies)
+                    lower_bound = mean_entropy - std_entropy
+                    upper_bound = mean_entropy + std_entropy-(std_entropy/6)
+                    
+                    print(f"Mean entropy: {mean_entropy:.4f}, Std: {std_entropy:.4f}")
+                    print(f"Keeping clients with entropy in [{lower_bound:.4f}, {upper_bound:.4f}]")
+                    
+                    # 3. Lista de tuplas para manter índice
                     client_tuples = [(self.ids[idx], client_entropies[self.ids[idx]]) for idx in range(len(self.ids))]
 
-                    # 4. Remover clientes abaixo da média (iterando de trás para frente)
+                    # 4. Remover outliers (de trás para frente)
                     for idx in range(len(client_tuples) - 1, -1, -1):
                         client_id, entropy = client_tuples[idx]
-                        if entropy < mean_entropy:
-                            print(f"Removing client {client_id} with entropy {entropy:.4f} (below mean)")
+                        if entropy < lower_bound or entropy > upper_bound:
+                            print(f"Removing client {client_id} with entropy {entropy:.4f} (outlier)")
 
-                            # Remover de todas as listas associadas
+                            # Remover das listas associadas
                             del self.uploaded_models[idx]
                             del self.ids[idx]
                             del self.uploaded_ids[idx]
