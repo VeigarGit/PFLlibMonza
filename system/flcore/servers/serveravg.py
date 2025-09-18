@@ -138,6 +138,8 @@ class FedAvg(Server):
                 if self.cc ==4:
                     client_entropies = self.calculate_client_entropies()
                     normalized_client_entropies = self.normalize_entropies(client_entropies)
+                if self.cc==5:
+                    print("vai rolar nada")
 
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)

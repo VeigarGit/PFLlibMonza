@@ -185,20 +185,20 @@ class Server(object):
 
         num_clients = len(self.uploaded_models)
         
-        # 1. Flatten todos os modelos e empilhar em um único tensor
+        #Flatten todos os modelos e empilhar em um único tensor
         all_params = torch.stack([self.flatten_model_params(model) for model in self.uploaded_models])  # shape: [num_clients, num_features]
         
-        # 2. Normalizar os vetores para calcular cosseno facilmente
+        #Normalizar os vetores para calcular cosseno facilmente
         norms = torch.norm(all_params, dim=1, keepdim=True)  # [num_clients, 1]
         normalized_params = all_params / (norms + 1e-10)
         
-        # 3. Calcular a matriz de similaridade: dot product entre vetores normalizados
+        #Calcular a matriz de similaridade: dot product entre vetores normalizados
         similarity_matrix = torch.matmul(normalized_params, normalized_params.T)  # shape: [num_clients, num_clients]
         
-        # 4. Converter para NumPy se necessário
+        #Converter para NumPy
         similarity_matrix_np = similarity_matrix.cpu().numpy()
         
-        # 5. Calcular score médio de cada cliente (excluindo diagonal)
+        #Calcular score médio de cada cliente (excluindo diagonal)
         #scores = (similarity_matrix_np.sum(axis=1) - 1) / (num_clients - 1)  # média da similaridade com os outros clientes
         scores= self.calculate_client_scores(similarity_matrix_np)
         return similarity_matrix_np, scores
