@@ -136,8 +136,30 @@ class FedAvg(Server):
                     vish = bye - oi  # Calcula o tempo decorrido
                     print(f"Tempo de execução: {vish:.4f} segundos")
                 if self.cc ==4:
+                    oi = time.time()
                     client_entropies = self.calculate_client_entropies()
-                    normalized_client_entropies = self.normalize_entropies(client_entropies)
+                    entropies_array = np.array(list(client_entropies.values()))
+                    mean_entropy = np.mean(entropies_array)
+                    print(f"Mean Shannon entropy: {mean_entropy:.4f}")
+
+                    # 3. Criar lista de tuplas (id, entropy) para percorrer
+                    client_tuples = [(self.ids[idx], client_entropies[self.ids[idx]]) for idx in range(len(self.ids))]
+
+                    # 4. Remover clientes abaixo da média (iterando de trás para frente)
+                    for idx in range(len(client_tuples) - 1, -1, -1):
+                        client_id, entropy = client_tuples[idx]
+                        if entropy < mean_entropy:
+                            print(f"Removing client {client_id} with entropy {entropy:.4f} (below mean)")
+
+                            # Remover de todas as listas associadas
+                            del self.uploaded_models[idx]
+                            del self.ids[idx]
+                            del self.uploaded_ids[idx]
+                            del self.uploaded_weights[idx]
+                    #normalized_client_entropies = self.normalize_entropies(client_entropies)
+                    bye = time.time()
+                    vish = bye - oi  # Calcula o tempo decorrido
+                    print(f"Tempo de execução: {vish:.4f} segundos")
                 if self.cc==5:
                     print("vai rolar nada")
 

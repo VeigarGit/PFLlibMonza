@@ -502,7 +502,7 @@ if __name__ == "__main__":
     parser.add_argument('-nmc', "--n_client_malicious", type=int, default=0)
     parser.add_argument('-atk', '--atack', type = str, default='random')
     parser.add_argument('-ria', '--round_init_atk', type = int, default=0)
-    parser.add_argument('-cc', '--cluster_comparation', type = int, default=0) # 0 score com modelo global, 1 score com comparação entre clientes
+    parser.add_argument('-cc', '--cluster_comparation', type = int, default=0) # 0 score com modelo global, 1 score com comparação entre clientes, 2 comparação entre clientes e remove todo o cluster , 3 comparação entre clientes com pontuação, 4 entropia do modelo 5 sem nada
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
