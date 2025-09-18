@@ -176,7 +176,34 @@ class Server(object):
             similarity = self.cosine_similarity(client_model_params, global_model_params)
             similarities.append((self.ids[idx], similarity)) # Armazenando o ID do e a similaridade
         return similarities
-    
+    def flatten_model_params(self, model):
+        #retorna parametros achatados
+        return torch.cat([p.detach().flatten() for p in model.parameters()])
+
+    def calculate_similarity_scores(self):
+        #Calcula a matriz de similaridade de cosseno entre todos os clientes e retorna a matriz + os scores médios de cada cliente.
+
+        num_clients = len(self.uploaded_models)
+        
+        # 1. Flatten todos os modelos e empilhar em um único tensor
+        all_params = torch.stack([self.flatten_model_params(model) for model in self.uploaded_models])  # shape: [num_clients, num_features]
+        
+        # 2. Normalizar os vetores para calcular cosseno facilmente
+        norms = torch.norm(all_params, dim=1, keepdim=True)  # [num_clients, 1]
+        normalized_params = all_params / (norms + 1e-10)
+        
+        # 3. Calcular a matriz de similaridade: dot product entre vetores normalizados
+        similarity_matrix = torch.matmul(normalized_params, normalized_params.T)  # shape: [num_clients, num_clients]
+        
+        # 4. Converter para NumPy se necessário
+        similarity_matrix_np = similarity_matrix.cpu().numpy()
+        
+        # 5. Calcular score médio de cada cliente (excluindo diagonal)
+        #scores = (similarity_matrix_np.sum(axis=1) - 1) / (num_clients - 1)  # média da similaridade com os outros clientes
+        scores= self.calculate_client_scores(similarity_matrix_np)
+        return similarity_matrix_np, scores
+
+    """
     def calculate_similarity_scores(self):
         #Similaridade entre todos os clientes
         num_clients = len(self.uploaded_models)
@@ -203,7 +230,7 @@ class Server(object):
         a= self.calculate_client_scores(similarity_matrix)
         
         return similarity_matrix, a
-        
+    """
     def calculate_client_scores(self, similarity_matrix):
         """
         Calcula um score para cada cliente baseado na matriz de similaridade.
