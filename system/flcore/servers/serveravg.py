@@ -114,17 +114,17 @@ class FedAvg(Server):
                     # Converte os scores para array e calcula a média
                     scores_array = np.array(list(client_scores.values()))
                     mean_score = np.mean(scores_array)
-                    
+                    std_score = np.std(scores_array)
                     print(f"Average score: {mean_score:.4f}")
-
+                    mean_score = mean_score - std_score
+                    print(f"Average score: {mean_score:.4f}")
                     # Cria uma lista de tuplas para manter a posição dos clientes
                     client_tuples = [(self.ids[idx], client_scores[self.ids[idx]]) for idx in range(len(self.ids))]
 
                     # Itera de trás para frente para remover clientes abaixo da média
                     for idx in range(len(client_tuples) - 1, -1, -1):
                         client_id, score = client_tuples[idx]
-                        std_score = np.std(score)
-                        mean_score = score - std_score
+                        
                         if score < mean_score:
                             print(f"Removing client {client_id} with score {score:.4f} (below average)")
 
