@@ -123,6 +123,8 @@ class FedAvg(Server):
                     # Itera de trás para frente para remover clientes abaixo da média
                     for idx in range(len(client_tuples) - 1, -1, -1):
                         client_id, score = client_tuples[idx]
+                        std_score = np.std(score)
+                        mean_score = score - std_score
                         if score < mean_score:
                             print(f"Removing client {client_id} with score {score:.4f} (below average)")
 
@@ -135,6 +137,7 @@ class FedAvg(Server):
                     bye = time.time()
                     vish = bye - oi  # Calcula o tempo decorrido
                     print(f"Tempo de execução: {vish:.4f} segundos")
+                
                 if self.cc ==4:
                     oi = time.time()
                     k = 3
@@ -143,7 +146,7 @@ class FedAvg(Server):
                     mean_entropy = np.mean(entropies)
                     std_entropy = np.std(entropies)
                     lower_bound = mean_entropy - std_entropy
-                    upper_bound = mean_entropy + std_entropy-(std_entropy/6)
+                    upper_bound = mean_entropy + std_entropy-(std_entropy/2)
                     
                     print(f"Mean entropy: {mean_entropy:.4f}, Std: {std_entropy:.4f}")
                     print(f"Keeping clients with entropy in [{lower_bound:.4f}, {upper_bound:.4f}]")
