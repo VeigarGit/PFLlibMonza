@@ -4,8 +4,11 @@ import torch
 from collections import defaultdict
 
 
-def read_data(dataset, idx, is_train=True):
-    if is_train:
+def read_data(dataset, idx, is_train=True, is_malicious=False):
+    if is_malicious and is_train:
+        print("Malicious label")
+        data_dir = os.path.join('../dataset', dataset, 'train_mal/')
+    if is_train and not is_malicious:
         data_dir = os.path.join('../dataset', dataset, 'train/')
     else:
         data_dir = os.path.join('../dataset', dataset, 'test/')
@@ -16,8 +19,8 @@ def read_data(dataset, idx, is_train=True):
     return data
 
 
-def read_client_data(dataset, idx, is_train=True, few_shot=0):
-    data = read_data(dataset, idx, is_train)
+def read_client_data(dataset, idx, is_train=True, few_shot=0, is_malicious=False):
+    data = read_data(dataset, idx, is_train, is_malicious)
     if "News" in dataset:
         data_list = process_text(data)
     elif "Shakespeare" in dataset:
