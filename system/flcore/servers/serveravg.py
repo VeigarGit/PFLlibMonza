@@ -4,6 +4,7 @@ from flcore.servers.serverbase import Server
 from threading import Thread
 import numpy as np
 from collections import Counter
+import torch
 class FedAvg(Server):
     def __init__(self, args, times):
         super().__init__(args, times)
@@ -124,7 +125,7 @@ class FedAvg(Server):
                     # Itera de trás para frente para remover clientes abaixo da média
                     for idx in range(len(client_tuples) - 1, -1, -1):
                         client_id, score = client_tuples[idx]
-                        
+                        print(f"Esse  {client_id} with score {score:.4f} ")
                         if score < mean_score:
                             print(f"Removing client {client_id} with score {score:.4f} (below average)")
 

@@ -72,7 +72,7 @@ class ClientMaliciousAVG(clientAVG):
                         self.optimizer.step()
                 return self.model
             elif self.atack == 'all':
-                numero = random.choice([1, 2, 3])
+                numero = random.choice([1, 2, 3, 4])
                 if numero == 1:
                     print("ataque zeros")
                     return model_zeros(self.model, self.device)
@@ -85,7 +85,7 @@ class ClientMaliciousAVG(clientAVG):
                 elif numero==4:
                     is_malicious = True
                     trainloader = self.load_train_data(None, is_malicious)
-            # self.model.to(self.device)
+                    # self.model.to(self.device)
                     self.model.train()
                     max_local_epochs = self.local_epochs
                     if self.train_slow:

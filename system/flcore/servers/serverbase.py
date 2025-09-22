@@ -179,6 +179,15 @@ class Server(object):
     def flatten_model_params(self, model):
         #retorna parametros achatados
         return torch.cat([p.detach().flatten() for p in model.parameters()])
+    
+    def calcular_gradiente_l2(self, modelo, lambda_l2=0.01):
+        # Sua implementação do cálculo do gradiente L2
+        gradiente_l2 = 0.0
+        for parametro in modelo.parameters():
+            if parametro.grad is not None:
+                gradiente_l2 += torch.sum(parametro ** 2)
+        gradiente_l2 = lambda_l2 * gradiente_l2
+        return gradiente_l2
 
     def calculate_similarity_scores(self):
         #Calcula a matriz de similaridade de cosseno entre todos os clientes e retorna a matriz + os scores médios de cada cliente.
@@ -194,15 +203,39 @@ class Server(object):
         
         #Calcular a matriz de similaridade: dot product entre vetores normalizados
         similarity_matrix = torch.matmul(normalized_params, normalized_params.T)  # shape: [num_clients, num_clients]
-        
+        #for row in similarity_matrix:
+        #    print("  ".join([f"{x:0.6f}" for x in row])) 
         #Converter para NumPy
         similarity_matrix_np = similarity_matrix.cpu().numpy()
-        
+        desvio_padrao = torch.std(similarity_matrix)
+        grad=[]
+        if desvio_padrao < 0.01:
+    # Inicializar o dicionário para armazenar os gradientes dos clientes
+            grad = {}
+
+            # Itera sobre os modelos carregados
+            for i, model in enumerate(self.uploaded_models):
+                # Calcula o gradiente L2 para cada modelo
+                gradiente_l2 = self.calcular_gradiente_l2(model, lambda_l2=0.01)
+                
+                # Adiciona o gradiente ao dicionário com o id do cliente
+                grad[self.ids[i]] = gradiente_l2.item()
+                
+                # Exemplo de adicionar esse gradiente à perda do modelo
+                print(f"Gradiente L2 calculado para o cliente {self.ids[i]}: {gradiente_l2.item()}")
+
+            # Exibe a média dos gradientes
+            print(np.mean(list(grad.values())))
+
+            return similarity_matrix_np, grad
+
         #Calcular score médio de cada cliente (excluindo diagonal)
         #scores = (similarity_matrix_np.sum(axis=1) - 1) / (num_clients - 1)  # média da similaridade com os outros clientes
         scores= self.calculate_client_scores(similarity_matrix_np)
         return similarity_matrix_np, scores
 
+        
+    
     """
     def calculate_similarity_scores(self):
         #Similaridade entre todos os clientes
