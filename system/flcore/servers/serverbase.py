@@ -76,17 +76,17 @@ class Server(object):
     def set_clients(self, clientObj):
         indexes = list(range(self.num_clients))
         n_malicious = self.n_client_malicious
-        index_malicious = np.random.choice(indexes, n_malicious, replace=False)
-        print(index_malicious)
+        self.index_malicious = np.random.choice(indexes, n_malicious, replace=False)
+        print(self.index_malicious)
         for i, train_slow, send_slow in zip(range(self.num_clients), self.train_slow_clients, self.send_slow_clients):
             train_data = read_client_data(self.dataset, i, is_train=True, few_shot=self.few_shot)
             test_data = read_client_data(self.dataset, i, is_train=False, few_shot=self.few_shot)
             
-            if i not in index_malicious:
+            if i not in self.index_malicious:
                 client = clientObj(self.args, id=i, train_samples=len(train_data), 
                                 test_samples=len(test_data), train_slow=train_slow, 
                                 send_slow=send_slow)
-            elif i in index_malicious:
+            elif i in self.index_malicious:
                 client = ClientMaliciousAVG(self.args, id=i, train_samples=len(train_data), 
                                 test_samples=len(test_data), train_slow=train_slow, 
                                 send_slow=send_slow)

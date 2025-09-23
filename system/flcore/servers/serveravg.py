@@ -121,12 +121,15 @@ class FedAvg(Server):
                     print(f"Average score: {mean_score:.4f}")
                     # Cria uma lista de tuplas para manter a posição dos clientes
                     client_tuples = [(self.ids[idx], client_scores[self.ids[idx]]) for idx in range(len(self.ids))]
-
+                    total = len(self.index_malicious)
+                    a = 0
                     # Itera de trás para frente para remover clientes abaixo da média
                     for idx in range(len(client_tuples) - 1, -1, -1):
                         client_id, score = client_tuples[idx]
                         print(f"Esse  {client_id} with score {score:.4f} ")
                         if score < mean_score:
+                            if client_id in self.index_malicious:
+                                a = a+1
                             print(f"Removing client {client_id} with score {score:.4f} (below average)")
 
                             # Remover o cliente das listas associadas
@@ -134,6 +137,8 @@ class FedAvg(Server):
                             del self.ids[idx]
                             del self.uploaded_ids[idx]
                             del self.uploaded_weights[idx]
+                    a = (a/total) *100
+                    print("porcentagem de clientes maliciosos de verdade achados: "+ str(a) + "%")
                     self.uploaded_weights = [weight / sum(self.uploaded_weights) for weight in self.uploaded_weights]
                     bye = time.time()
                     vish = bye - oi  # Calcula o tempo decorrido
