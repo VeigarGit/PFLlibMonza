@@ -72,9 +72,10 @@ class Server(object):
         self.current_round = -1
         self.cc = args.cluster_comparation
         self.ids =[]
-
+       
     def set_clients(self, clientObj):
         indexes = list(range(self.num_clients))
+        self.client_quarantine_dict = {indexes: {'quarentena': 0, 'roundsQuarent': 0} for indexes in range(self.num_clients)}
         n_malicious = self.n_client_malicious
         self.index_malicious = np.random.choice(indexes, n_malicious, replace=False)
         print(self.index_malicious)
@@ -114,8 +115,18 @@ class Server(object):
             self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0]
         else:
             self.current_num_join_clients = self.num_join_clients
-        selected_clients = list(np.random.choice(self.clients, self.current_num_join_clients, replace=False))
-
+        quarantined_ids =[]
+        for client_id, status in self.client_quarantine_dict.items():
+        # Verifica a condição
+            if status['roundsQuarent'] > 0:
+                quarantined_ids.append(client_id)
+        new_num_clients = self.clients.copy()
+        for idx in range(len(new_num_clients) - 1, -1, -1):
+            if idx in quarantined_ids:
+                del new_num_clients[idx]
+        self.current_num_join_clients = int(len(new_num_clients) * self.join_ratio)
+        selected_clients = list(np.random.choice(new_num_clients, self.current_num_join_clients, replace=False))
+        print(len(selected_clients))
         return selected_clients
 
     def send_models(self):

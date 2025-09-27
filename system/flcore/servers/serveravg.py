@@ -39,17 +39,28 @@ class FedAvg(Server):
             print(f"Normalized Shannon entropy for client {client_id}: {normalized_entropy:.4f}")
 
         return normalized_client_entropies
+    def set_client_quarantine(self, client_id):
+        self.client_quarantine_dict[client_id]['quarentena'] = self.client_quarantine_dict[client_id]['quarentena'] +1
+        self.client_quarantine_dict[client_id]['roundsQuarent'] = self.client_quarantine_dict[client_id]['quarentena'] *2
+    def decrease_quarentine(self, client_id):
+        if self.client_quarantine_dict[client_id]['roundsQuarent'] ==0:
+            self.client_quarantine_dict[client_id]['roundsQuarent'] = 0
+        else:
+            self.client_quarantine_dict[client_id]['roundsQuarent'] = self.client_quarantine_dict[client_id]['roundsQuarent'] -1
 
     def train(self):
         for i in range(self.global_rounds+1):
             s_t = time.time()
             self.selected_clients = self.select_clients()
             self.send_models()
+            
 
             if i%self.eval_gap == 0:
                 print(f"\n-------------Round number: {i}-------------")
                 print("\nEvaluate global model")
                 self.evaluate()
+            for j in range(self.num_clients):
+                self.decrease_quarentine(j)
 
             for client in self.selected_clients:
                 client.train()
@@ -131,7 +142,7 @@ class FedAvg(Server):
                             if client_id in self.index_malicious:
                                 a = a+1
                             print(f"Removing client {client_id} with score {score:.4f} (below average)")
-
+                            self.set_client_quarantine(client_id)
                             # Remover o cliente das listas associadas
                             del self.uploaded_models[idx]
                             del self.ids[idx]
@@ -177,7 +188,7 @@ class FedAvg(Server):
                     print(f"Tempo de execução: {vish:.4f} segundos")
                 if self.cc==5:
                     print("vai rolar nada")
-
+            print(self.client_quarantine_dict)
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()
