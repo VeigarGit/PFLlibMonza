@@ -39,6 +39,7 @@ class Server(object):
         self.top_cnt = args.top_cnt
         self.auto_break = args.auto_break
         self.cc = args.cluster_comparation
+        self.rate_client_fake = args.rate_client_fake
 
         self.clients = []
         self.selected_clients = []
@@ -376,7 +377,7 @@ class Server(object):
         return os.path.exists(model_path)
         
     def save_results(self):
-        algo = self.dataset + "_" + self.algorithm + "_" + str(self.cc)
+        algo = self.dataset + "_" + self.algorithm + "_" + str(self.cc) + "_" + str((self.rate_client_fake*100))
         result_path = "../results/"
         if not os.path.exists(result_path):
             os.makedirs(result_path)

@@ -15,7 +15,7 @@ class ClientMaliciousAVG(clientAVG):
     def __init__(self, args, id, train_samples, test_samples, **kwargs):
         super().__init__(args, id, train_samples, test_samples, **kwargs)
 
-        self.rate_client_fake = 1
+        self.rate_client_fake = args.rate_client_fake
         self.atack = args.atack
 
         self.list_global_model = []
