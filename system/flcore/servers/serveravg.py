@@ -135,19 +135,22 @@ class FedAvg(Server):
                     total = len(self.index_malicious)
                     a = 0
                     # Itera de trás para frente para remover clientes abaixo da média
-                    for idx in range(len(client_tuples) - 1, -1, -1):
-                        client_id, score = client_tuples[idx]
-                        print(f"Esse  {client_id} with score {score:.4f} ")
-                        if score < mean_score:
-                            if client_id in self.index_malicious:
-                                a = a+1
-                            print(f"Removing client {client_id} with score {score:.4f} (below average)")
-                            self.set_client_quarantine(client_id)
-                            # Remover o cliente das listas associadas
-                            del self.uploaded_models[idx]
-                            del self.ids[idx]
-                            del self.uploaded_ids[idx]
-                            del self.uploaded_weights[idx]
+                    if std_score<0.001:
+                        print("nenhum malicioso")
+                    else:
+                        for idx in range(len(client_tuples) - 1, -1, -1):
+                            client_id, score = client_tuples[idx]
+                            print(f"Esse  {client_id} with score {score:.4f} ")
+                            if score < mean_score:
+                                if client_id in self.index_malicious:
+                                    a = a+1
+                                print(f"Removing client {client_id} with score {score:.4f} (below average)")
+                                self.set_client_quarantine(client_id)
+                                # Remover o cliente das listas associadas
+                                del self.uploaded_models[idx]
+                                del self.ids[idx]
+                                del self.uploaded_ids[idx]
+                                del self.uploaded_weights[idx]
                     a = (a/total) *100
                     print("porcentagem de clientes maliciosos de verdade achados: "+ str(a) + "%")
                     self.uploaded_weights = [weight / sum(self.uploaded_weights) for weight in self.uploaded_weights]
