@@ -41,6 +41,7 @@ class Server(object):
         self.cc = args.cluster_comparation
         self.rate_client_fake = args.rate_client_fake
 
+
         self.clients = []
         self.selected_clients = []
         self.train_slow_clients = []
@@ -377,7 +378,7 @@ class Server(object):
         return os.path.exists(model_path)
         
     def save_results(self):
-        algo = self.dataset + "_" + self.algorithm + "_" + str(self.cc) + "_" + str((self.rate_client_fake*100))
+        algo = self.dataset + "_" + self.algorithm + "_" + str(self.cc) + "_" + str((self.rate_client_fake*100)) + "_" + str(self.n_client_malicious)
         result_path = "../results/"
         if not os.path.exists(result_path):
             os.makedirs(result_path)
