@@ -5,10 +5,20 @@ from threading import Thread
 import numpy as np
 from collections import Counter
 import torch
+import csv
+import os
 class FedAvg(Server):
     def __init__(self, args, times):
         super().__init__(args, times)
+        self.fpr_frr_results = []
 
+        # Open the CSV file in append mode to save results over time
+        self.csv_filename = 'fpr_frr_results.csv'
+        # Write headers if the file is empty (first time writing)
+        if not os.path.exists(self.csv_filename):
+            with open(self.csv_filename, mode='w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['Round', 'FPR', 'FRR'])
         # select slow clients
         self.set_slow_clients()
         self.set_clients(clientAVG)
@@ -18,6 +28,13 @@ class FedAvg(Server):
 
         # self.load_model()
         self.Budget = []
+    def save_fpr_frr_to_csv(self, round_number, FPR, FRR):
+        """
+        Saves the FPR and FRR results to a CSV file for each round.
+        """
+        with open(self.csv_filename, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([round_number, FPR, FRR])
 
     def normalize_entropies(self, client_entropies):
         """Normaliza as entropias para que fiquem no intervalo [0, 1]"""
@@ -42,11 +59,42 @@ class FedAvg(Server):
     def set_client_quarantine(self, client_id):
         self.client_quarantine_dict[client_id]['quarentena'] = self.client_quarantine_dict[client_id]['quarentena'] +1
         self.client_quarantine_dict[client_id]['roundsQuarent'] = self.client_quarantine_dict[client_id]['quarentena'] *2
+
     def decrease_quarentine(self, client_id):
         if self.client_quarantine_dict[client_id]['roundsQuarent'] ==0:
             self.client_quarantine_dict[client_id]['roundsQuarent'] = 0
         else:
             self.client_quarantine_dict[client_id]['roundsQuarent'] = self.client_quarantine_dict[client_id]['roundsQuarent'] -1
+    def compute_fpr_frr(self):
+        """
+        Calcula False Positive Rate (FPR) e False Rejection Rate (FRR)
+        usando self.client_quarantine_dict e self.index_malicious.
+        """
+        FP = 0  # Falsos positivos: clientes em quarentena mas não maliciosos
+        TP = 0  # Verdadeiros positivos: clientes em quarentena e maliciosos
+        FN = 0  # Falsos negativos: maliciosos não detectados
+        TN = 0  # Verdadeiros negativos: não maliciosos e não em quarentena
+
+        for client_id in range(self.num_clients):
+            in_quarantine = self.client_quarantine_dict[client_id]['quarentena'] > 0
+            is_malicious = client_id in self.index_malicious
+
+            if in_quarantine and not is_malicious:
+                FP += 1
+            elif in_quarantine and is_malicious:
+                TP += 1
+            elif not in_quarantine and is_malicious:
+                FN += 1
+            elif not in_quarantine and not is_malicious:
+                TN += 1
+
+        # Evitar divisão por zero
+        FPR = FP / (FP + TN) if (FP + TN) > 0 else 0
+        FRR = FN / (FN + TP) if (FN + TP) > 0 else 0
+
+        return FPR, FRR
+
+
 
     def train(self):
         for i in range(self.global_rounds+1):
@@ -192,6 +240,9 @@ class FedAvg(Server):
                 if self.cc==5:
                     print("vai rolar nada")
             print(self.client_quarantine_dict)
+            FPR, FRR = self.compute_fpr_frr()
+            print(f"Round {i}: False Positive Rate = {FPR:.4f}, False Rejection Rate = {FRR:.4f}")
+            self.save_fpr_frr_to_csv(i, FPR, FRR)
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()
