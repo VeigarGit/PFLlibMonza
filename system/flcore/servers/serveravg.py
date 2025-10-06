@@ -97,7 +97,37 @@ class FedAvg(Server):
 
         return FPR, FRR
 
+    def compute_fpr_frr_cluster(self, removed_clients, cluster_tuples):
+        """
+        Calcula FPR e FRR com base nos clientes removidos do cluster.
+        """
+        FP = 0  # Falsos positivos: clientes não maliciosos removidos
+        TP = 0  # Verdadeiros positivos: maliciosos removidos
+        FN = 0  # Falsos negativos: maliciosos não removidos
+        TN = 0  # Verdadeiros negativos: não maliciosos não removidos
 
+        # Comparar os clientes removidos com a lista de maliciosos
+        for client_id in removed_clients:
+            is_malicious = client_id in self.index_malicious  # Verificar se é malicioso
+            if is_malicious:
+                TP += 1  # Cliente malicioso corretamente removido
+            else:
+                FP += 1  # Cliente não malicioso removido erroneamente
+
+        # Verificar os clientes que não foram removidos (ainda estão no cluster)
+        for client_id, cluster in cluster_tuples:
+            if client_id not in removed_clients:
+                is_malicious = client_id in self.index_malicious
+                if is_malicious:
+                    FN += 1  # Cliente malicioso não removido
+                else:
+                    TN += 1  # Cliente não malicioso não removido
+
+        # Calcular FPR e FRR
+        FPR = FP / (FP + TN) if (FP + TN) > 0 else 0
+        FRR = FN / (FN + TP) if (FN + TP) > 0 else 0
+
+        return FPR, FRR
 
     def train(self):
         for i in range(self.global_rounds+1):
@@ -153,13 +183,13 @@ class FedAvg(Server):
                     cluster_counts = Counter([cluster for _, cluster in cluster_tuples])
                     min_cluster = min(cluster_counts, key=cluster_counts.get)
 
-
+                    removed_clients = []
                     for idx in range(len(cluster_tuples) - 1, -1, -1):
                         client_id, cluster = cluster_tuples[idx]
                         #print(self.ids)
                         if cluster == min_cluster:
                             print(f"Removing client {client_id} from cluster {cluster}")
-                            
+                            removed_clients.append(client_id)
                             # Remover o cliente das listas associadas
                             del self.uploaded_models[idx]
                             del self.ids[idx]
@@ -243,7 +273,10 @@ class FedAvg(Server):
                 if self.cc==5:
                     print("vai rolar nada")
             print(self.client_quarantine_dict)
-            FPR, FRR = self.compute_fpr_frr()
+            if self.cc ==2:
+                FPR, FRR = self.compute_fpr_frr_cluster(removed_clients, cluster_tuples)
+            if self.cc ==3:
+                FPR, FRR = self.compute_fpr_frr()
             print(f"Round {i}: False Positive Rate = {FPR:.4f}, False Rejection Rate = {FRR:.4f}")
             self.save_fpr_frr_to_csv(i, FPR, FRR)
             if self.dlg_eval and i%self.dlg_gap == 0:
