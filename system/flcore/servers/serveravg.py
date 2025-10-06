@@ -130,12 +130,13 @@ class FedAvg(Server):
         return FPR, FRR
 
     def train(self):
+        
         for i in range(self.global_rounds+1):
             s_t = time.time()
             self.selected_clients = self.select_clients()
             self.send_models()
-            
-
+            self.removed_clients = []
+            self.cluster_tuples = ()
             if i%self.eval_gap == 0:
                 print(f"\n-------------Round number: {i}-------------")
                 print("\nEvaluate global model")
@@ -177,19 +178,18 @@ class FedAvg(Server):
                     #for idx, cluster in enumerate(clusters):
                         #print(f"Client {self.ids[idx]} is in cluster {cluster}")
 
-                    cluster_tuples = [(self.ids[idx], cluster) for idx, cluster in enumerate(clusters)]
+                    self.cluster_tuples = [(self.ids[idx], cluster) for idx, cluster in enumerate(clusters)]
                     for idx, cluster in enumerate(clusters):
                         print(f"Client {self.ids[idx]} is in cluster {cluster}")
-                    cluster_counts = Counter([cluster for _, cluster in cluster_tuples])
+                    cluster_counts = Counter([cluster for _, cluster in self.cluster_tuples])
                     min_cluster = min(cluster_counts, key=cluster_counts.get)
 
-                    removed_clients = []
-                    for idx in range(len(cluster_tuples) - 1, -1, -1):
-                        client_id, cluster = cluster_tuples[idx]
+                    for idx in range(len(self.cluster_tuples) - 1, -1, -1):
+                        client_id, cluster = self.cluster_tuples[idx]
                         #print(self.ids)
                         if cluster == min_cluster:
                             print(f"Removing client {client_id} from cluster {cluster}")
-                            removed_clients.append(client_id)
+                            self.removed_clients.append(client_id)
                             # Remover o cliente das listas associadas
                             del self.uploaded_models[idx]
                             del self.ids[idx]
@@ -274,7 +274,7 @@ class FedAvg(Server):
                     print("vai rolar nada")
             print(self.client_quarantine_dict)
             if self.cc ==2:
-                FPR, FRR = self.compute_fpr_frr_cluster(removed_clients, cluster_tuples)
+                FPR, FRR = self.compute_fpr_frr_cluster(self.removed_clients, self.cluster_tuples)
             if self.cc ==3:
                 FPR, FRR = self.compute_fpr_frr()
             print(f"Round {i}: False Positive Rate = {FPR:.4f}, False Rejection Rate = {FRR:.4f}")
