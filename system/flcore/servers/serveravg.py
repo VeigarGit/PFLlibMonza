@@ -13,7 +13,10 @@ class FedAvg(Server):
         self.fpr_frr_results = []
 
         # Open the CSV file in append mode to save results over time
-        self.csv_filename = 'fpr_frr_results.csv'
+        if self.cc ==3:
+            self.csv_filename = 'fpr_frr_results_3.csv'
+        if self.cc ==2:
+            self.csv_filename = 'fpr_frr_results_2.csv'
         # Write headers if the file is empty (first time writing)
         if not os.path.exists(self.csv_filename):
             with open(self.csv_filename, mode='w', newline='') as file:
