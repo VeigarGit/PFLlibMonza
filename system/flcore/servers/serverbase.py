@@ -54,6 +54,8 @@ class Server(object):
         self.rs_test_acc = []
         self.rs_test_auc = []
         self.rs_train_loss = []
+        self.rs_train_time = []
+        self.Budget = []
 
         self.times = times
         self.eval_gap = args.eval_gap
@@ -392,6 +394,7 @@ class Server(object):
                 hf.create_dataset('rs_test_acc', data=self.rs_test_acc)
                 hf.create_dataset('rs_test_auc', data=self.rs_test_auc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
+                hf.create_dataset('rs_train_time', data=self.Budget)
 
     def save_item(self, item, item_name):
         if not os.path.exists(self.save_folder_name):

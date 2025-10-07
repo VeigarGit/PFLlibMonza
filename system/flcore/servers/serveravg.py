@@ -30,7 +30,7 @@ class FedAvg(Server):
         print("Finished creating server and clients.")
 
         # self.load_model()
-        self.Budget = []
+        
     def save_fpr_frr_to_csv(self, round_number, FPR, FRR):
         """
         Saves the FPR and FRR results to a CSV file for each round.
