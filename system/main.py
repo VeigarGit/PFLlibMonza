@@ -376,7 +376,10 @@ def run(args):
     
 
     # Global average
-    average_data(dataset=args.dataset, algorithm=args.algorithm, goal=args.goal, times=args.times)
+    a = str(args.cluster_comparation)
+    b = str(args.rate_client_fake *100)
+    c = str(args.n_client_malicious)
+    average_data(dataset=args.dataset, algorithm=args.algorithm, goal=args.goal, times=args.times, cc=a, rate_fake=b,nmal=c)
 
     print("All done!")
 
