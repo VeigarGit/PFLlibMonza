@@ -79,7 +79,7 @@ class FedAvg(Server):
         TN = 0  # Verdadeiros negativos: não maliciosos e não em quarentena
 
         for client_id in range(self.num_clients):
-            in_quarantine = self.client_quarantine_dict[client_id]['quarentena'] > 0
+            in_quarantine = self.client_quarantine_dict[client_id]['roundsQuarent'] > 0
             is_malicious = client_id in self.index_malicious
 
             if in_quarantine and not is_malicious:
