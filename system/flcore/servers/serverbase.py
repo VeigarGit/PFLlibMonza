@@ -201,7 +201,7 @@ class Server(object):
         gradiente_l2 = 0.0
         for parametro in modelo.parameters():
             if parametro.grad is not None:
-                gradiente_l2 += torch.sum(parametro ** 2)
+                gradiente_l2 += torch.sum(parametro ** 2).item()
         gradiente_l2 = lambda_l2 * gradiente_l2
         return gradiente_l2
 
@@ -235,10 +235,13 @@ class Server(object):
                 gradiente_l2 = self.calcular_gradiente_l2(model, lambda_l2=0.01)
                 
                 # Adiciona o gradiente ao dicionário com o id do cliente
-                grad[self.ids[i]] = gradiente_l2.item()
+                grad[self.ids[i]] = gradiente_l2
                 
                 # Exemplo de adicionar esse gradiente à perda do modelo
-                print(f"Gradiente L2 calculado para o cliente {self.ids[i]}: {gradiente_l2.item()}")
+                try:
+                    print(f"Gradiente L2 calculado para o cliente {self.ids[i]}: {gradiente_l2}")
+                except Exception as e:
+                    print(f"Erro ao imprimir o gradiente para o cliente {self.ids[i]}: {e}")
 
             # Exibe a média dos gradientes
             print(np.mean(list(grad.values())))

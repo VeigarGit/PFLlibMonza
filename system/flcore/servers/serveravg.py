@@ -17,6 +17,8 @@ class FedAvg(Server):
             self.csv_filename = 'fpr_frr_results_3.csv'
         if self.cc ==2:
             self.csv_filename = 'fpr_frr_results_2.csv'
+        else:
+            self.csv_filename = 'f.csv'
         # Write headers if the file is empty (first time writing)
         if not os.path.exists(self.csv_filename):
             with open(self.csv_filename, mode='w', newline='') as file:
@@ -144,13 +146,13 @@ class FedAvg(Server):
             for j in range(self.num_clients):
                 self.decrease_quarentine(j)
 
-            for client in self.selected_clients:
-                client.train()
+            #for client in self.selected_clients:
+            #    client.train()
 
-            # threads = [Thread(target=client.train)
-            #            for client in self.selected_clients]
-            # [t.start() for t in threads]
-            # [t.join() for t in threads]
+            threads = [Thread(target=client.train)
+                       for client in self.selected_clients]
+            [t.start() for t in threads]
+            [t.join() for t in threads]
 
             self.receive_models()
             if i>0:
@@ -273,6 +275,8 @@ class FedAvg(Server):
                 if self.cc==5:
                     print("vai rolar nada")
             print(self.client_quarantine_dict)
+            FPR=0
+            FRR = 0
             if self.cc ==2:
                 FPR, FRR = self.compute_fpr_frr_cluster(self.removed_clients, self.cluster_tuples)
             if self.cc ==3:

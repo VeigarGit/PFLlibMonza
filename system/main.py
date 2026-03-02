@@ -101,6 +101,9 @@ def run(args):
             else:
                 args.model = FedAvgCNN(in_features=3, num_classes=args.num_classes, dim=10816).to(args.device)
 
+        elif model_str == "VGG": # non-convex
+                args.model = VGG(vgg_name="VGG11",num_classes=args.num_classes).to(args.device)
+
         elif model_str == "DNN": # non-convex
             if "MNIST" in args.dataset:
                 args.model = DNN(1*28*28, 100, num_classes=args.num_classes).to(args.device)
